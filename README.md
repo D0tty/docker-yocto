@@ -3,38 +3,33 @@ docker-yocto
 
 ## About
 
-This repo contains docker image I use for building the yocto images.
+This is an updated fork of [this repository](https://github.com/coldnew/docker-yocto)
 
-I use the script [yocto-build.sh](https://raw.githubusercontent.com/coldnew/docker-yocto/master/yocto-build.sh) to switch yocto building environment so I can use docker to build the [Yocto project](https://www.yoctoproject.org) instad of install a ubuntu as VM.
+It contains a Dockerfile to generate a docker image that I use for building the yocto images.
+
+I use the script [yocto-build.sh](https://raw.githubusercontent.com/D0tty/docker-yocto/master/yocto-build.sh) to switch yocto building environment so I can use docker to build the [Yocto project](https://www.yoctoproject.org) instead of install a ubuntu as VM.
 
 ## Setting up
 
-First download the [yocto-build.sh](https://raw.githubusercontent.com/coldnew/docker-yocto/master/yocto-build.sh) as `~/bin/yocto-build`
+First download the [yocto-build.sh](https://raw.githubusercontent.com/D0tty/docker-yocto/master/yocto-build.sh) as `~/bin/yocto-build`
 
 ```sh
-mkdir -p ~/bin
-curl https://raw.githubusercontent.com/coldnew/docker-yocto/master/yocto-build.sh > ~/bin/yocto-build
-chmod +x ~/bin/yocto-build
-```
-
-Add following line to the `~/.bashrc` file to ensure that the `~/bin` folder is in you PATH variable.
-
-```sh
-export PATH=~/bin:$PATH
+curl https://raw.githubusercontent.com/D0tty/docker-yocto/master/yocto-build.sh > ./yocto-build
+sudo mv yocto-build /bin/yocto-build
+sudo chmod +x ~/bin/yocto-build
 ```
 
 ## Basic Usage
 
-First time to use the `yocto-build` command, you need to tell it where is the workdir we build the yocto image.
+The first time you need to specify a working directory.
 
-For example, if I want to build yocto at `/home/coldnew/poky` then:
+For example, if I want to build `yocto` at `/home/dotty/school/lirt/poky` then:
 
 ```sh
-yocto-build --workdir /home/coldnew/poky
+yocto-build --workdir /home/dotty/school/lirt/poky
 ```
 
-After this command, we'll create a container named `yocto-build`, which is the environment we used to build the yocto image.
-Now you'll find your current shell is switch to the container and the `/home/coldnew/poky` is mounted to `/yocto`.
+If you have a look at the script, this command will create a new container with the working directory mounted as a volume in `/yocto` and you will be in the context of the started container.
 
 ## Spawn a new shell
 
@@ -44,17 +39,13 @@ If you want to spawn a new shell in another terminal, you can use
 yocto-build --shell
 ```
 
-This will spawn a new shell if you already specify a workdir.
-
 ## Remove the container
 
-This script only support *ONLY ONE CONTAINER*, so If you want to change the workdir, you should remove it first, remove a container is easy, just use following command:
+This script only support *ONLY ONE CONTAINER*, so If you want to change the working directory, you should remove it first, remove a container is easy, just use following command:
 
 ```sh
 yocto-build --rm
 ```
-
-Then you can setup a new workdir you want.
 
 ## Upgrade script
 
@@ -71,3 +62,11 @@ To pull new docker image, just type
 ```sh
 yocto-build --pull
 ```
+
+## Todo
+
+* Add a new mount option for the Xenomai SDK
+
+## Maintainer
+
+* Thomas `Dotty` Michelot -  <thomas.michelot@epita.fr> 

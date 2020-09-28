@@ -1,10 +1,10 @@
 all: build
 
 build:
-	docker build -t coldnew/yocto-build .
+	docker build -t dotty/yocto-build-u20 .
 
 run:
-	docker run -it coldnew/yocto-build
+	docker run -it dotty/yocto-build-u20
 
 deploy:
-	docker push coldnew/yocto-build
+	docker push dotty/yocto-build-u20
