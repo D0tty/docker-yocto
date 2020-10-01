@@ -68,11 +68,11 @@ The variables supported are:
 
   IMAGE
 
-     The docker image you want to use, default: coldnew/yocto-build
+     The docker image you want to use, default: dotty/yocto-build-u20
 
      example:
 
-       IMAGE="coldnew/yocto-build"
+       IMAGE="dotty/yocto-build-u20"
 
 
   CONTAINER
@@ -97,8 +97,8 @@ FUNCDOC
         INFO "Read config from: ${HOME}/.yocto-build.sh"
         source "${HOME}/.yocto-build.sh"
 
-        if [ "$IMAGE" != "coldnew/yocto-build" ]; then
-            INFO "CONTAINER: $CONTAINER"
+        if [ "$IMAGE" != "dotty/yocto-build-u20" ]; then
+            INFO "IMAGE: $IMAGE"
         fi
 
         if [ "$CONTAINER" != "yocto-build" ]; then
@@ -124,7 +124,8 @@ Arguments:
     -a, --attach    : attach to current runing container
     -s, --shell     : spawn a new shell to current container
     -w, --workdir   : yocto workspace to shared with docker container
-    -r, --rm        : remove current working container
+        --rm        : remove current working container
+    -r, --resume    : resume a stopped container
     -u, --upgrade   : upgrade this script
     -p, --pull      : pull new docker container image
     -h, --help      : show this help info
@@ -134,11 +135,18 @@ Description:
     The first time you run this script, you should specify yor
     yocto project directory like following:
 
-        $0 --workdir /home/coldnew/poky
+        $0 --workdir /home/dotty/school/lirt/poky [/home/dotty/school/lirt/sdk]
 
     This script will help you to pull the docker image and mount
-    the /home/coldnew/poky to container's /yocto directory, and
-    you can build you yocto in this container.
+    the /home/dotty/school/lirrt/poky to container's /yocto directory,
+    and you can build you yocto in this container.
+    You can pass a second argument that will be the path to the SDK, and will
+    be mounted into /opt/poky in the container like so,
+    /home/dotty/school/lirt/sdk:/opt/poky
+
+    To restart a stopped configured yocto-build container, one can use:
+
+        $0 --resume
 
     If you want to attach current running shell, you can use:
 
@@ -165,7 +173,7 @@ EOF
 
 # NOTE: This requires GNU getopt.  On Mac OS X and FreeBSD, you have
 # to install this separately
-TEMP=`getopt -o uasw:rph --long upgrade,attach,shell,workdir:,rm,pull,help -- "$@"`
+TEMP=`getopt -o uasw:rph --long upgrade,attach,shell,workdir:,resume,rm,pull,help -- "$@"`
 
 if [ $? != 0 ] ; then
     usage
@@ -184,7 +192,7 @@ do
     case "$1" in
     -u | --upgrade)
         INFO "Upgrade script $NAME"
-        curl https://raw.githubusercontent.com/coldnew/docker-yocto/master/yocto-build.sh > /tmp/$SNAME
+        curl https://raw.githubusercontent.com/D0tty/docker-yocto/master/yocto-build.sh > /tmp/$SNAME
         mv /tmp/$SNAME $SDIR/$SNAME
         chmod +x $SDIR/$SNAME
         exit $?
@@ -197,12 +205,22 @@ do
     -h | --help)
         usage; exit 0
         ;;
-    -r | --rm)
+    --rm)
         if docker inspect $CONTAINER > /dev/null 2>&1 ; then
             INFO "Remove container: $CONTAINER"
             docker rm $CONTAINER
         else
             INFO "container: $CONTAINER not exist, no need to remove"
+        fi
+        exit $?
+        ;;
+    -r | --resume)
+        if docker inspect $CONTAINER > /dev/null 2>&1 ; then
+            INFO "Reattaching to running container $CONTAINER"
+            docker start -i ${CONTAINER}
+        else
+            ERROR "container: $CONTAINER not exist, please use '$0 --workdir <dir to share>' first"
+            exit -1
         fi
         exit $?
         ;;
@@ -230,6 +248,10 @@ do
         # Try to start an existing/stopped container with thie give name $CONTAINER
         # otherwise, run a new one.
         YOCTODIR=$(readlink -m "$2")
+        if [ ! -z "$3" ]; then
+            XENOMAI_SDX=$(readlink -m "$3")
+            SDK="--volume=$XENOMAI_SDX:/opt/pocky"
+        fi
         if docker inspect $CONTAINER > /dev/null 2>&1 ; then
             INFO "Reattaching to running container $CONTAINER"
             docker start -i ${CONTAINER}
@@ -237,8 +259,9 @@ do
             INFO "Creating container $CONTAINER"
             USER=$(whoami)
             read_config
-            docker run -it \
+            docker run -it\
                    --volume="$YOCTODIR:/yocto" \
+                   $SDK \
                    --volume="${HOME}/.ssh:/home/${USER}/.ssh" \
                    --volume="${HOME}/.gitconfig:/home/${USER}/.gitconfig" \
                    --volume="/etc/localtime:/etc/localtime:ro" \

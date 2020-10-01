@@ -26,10 +26,20 @@ The first time you need to specify a working directory.
 For example, if I want to build `yocto` at `/home/dotty/school/lirt/poky` then:
 
 ```sh
-yocto-build --workdir /home/dotty/school/lirt/poky
+yocto-build --workdir /home/dotty/school/lirt/poky /home/dotty/school/lirt/sdk
 ```
 
 If you have a look at the script, this command will create a new container with the working directory mounted as a volume in `/yocto` and you will be in the context of the started container.
+
+You can pass an optional argument to specify a sdk directory to the container. This directory will be mounted in `/opt/poky` inside the container
+
+## Resume a stoped configured container
+
+If you want to resume (restart) a previously configured container you can use
+
+```sh
+yocto-build --resume
+```
 
 ## Spawn a new shell
 
